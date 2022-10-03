@@ -27,9 +27,9 @@ urchin_orig = read_csv("urchin_orig.csv")         # Monthly urchin monitoring da
 wave = df_wave |> 
   mutate(month = month(datetime)) |> 
   mutate(season = ifelse(month <= 2 | month == 12, "winter",
-                         ifelse(month >= 3 & month < 6, "spring", 
-                                ifelse(month >= 6 & month < 9, "summer",
-                                       ifelse(month >= 9 & month < 12, "autumn", "none"))))) |> 
+                  ifelse(month >= 3 & month < 6, "spring", 
+                  ifelse(month >= 6 & month < 9, "summer",
+                  ifelse(month >= 9 & month < 12, "autumn", "none"))))) |> 
   mutate(season = factor(season, levels = c("winter", "spring", "summer", "autumn"))) |> 
   group_by(location, season) |> 
   summarise_if(is.numeric, mean, na.rm = TRUE) 
@@ -47,9 +47,9 @@ wave |>
 pendant = df_light |> 
   mutate(month = month(datetime)) |> 
   mutate(season = ifelse(month <= 2 | month == 12, "winter",
-                         ifelse(month >= 3 & month < 6, "spring", 
-                                ifelse(month >= 6 & month < 9, "summer",
-                                       ifelse(month >= 9 & month < 12, "autumn", "none"))))) 
+                  ifelse(month >= 3 & month < 6, "spring", 
+                  ifelse(month >= 6 & month < 9, "summer",
+                  ifelse(month >= 9 & month < 12, "autumn", "none"))))) 
 
 # Averaged across locations
 pendant |> 
@@ -119,6 +119,7 @@ CORES   = CHAINS
 SEED    = 2021
 ITER    = 4000
 CONTROL = list(adapt_delta = 0.999, max_treedepth = 15, stepsize = 0.001)
+
 ## Model: Wave height ----------------------------------------------------------
 waves = df_wave |> 
   mutate(month = month(datetime),
@@ -157,7 +158,7 @@ m_wave_null_out =
       prior     = prior_wn,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
-      file      = "transect_wave_null"
+      file      = "transect_wave_null" # Creates a .rds file from the model fit 
   )
 
 m_wave_out = 
@@ -170,10 +171,10 @@ m_wave_out =
       prior     = prior_w,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
-      file      = "transect_wave"
-  )
+      file      = "transect_wave" # Creates a .rds file from the model fit
+      )
 
-pp_check(m_wave_out, ndraws = 100)
+pp_check(m_wave_out, type = "hist", ndraws = 100)
 pp_check(m_wave_out, type = "ecdf_overlay", ndraws = 100)
 wave_null = loo(m_wave_null_out)
 wave_mod  = loo(m_wave_out)
@@ -198,7 +199,7 @@ m_light_null =
 
 m_light = 
   bf(mean_ppfd ~ s(time, bs = "cr", k = 5) + 
-       interaction(location, trans) + location + trans) + gaussian(link = "log")
+               interaction(location, trans) + location + trans) + gaussian(link = "log")
 
 get_prior(m_light, data = light)
 
@@ -222,7 +223,7 @@ m_light_null_out =
       prior     = prior_ln,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
-      file      = "~/Lab_Data/bellezad/write_out/transect_ppfd_null"
+      file      = "transect_ppfd_null" # Creates a .rds file from the model fit
   )
 
 m_light_out = 
@@ -235,8 +236,8 @@ m_light_out =
       prior     = prior_l,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
-      file      = "~/Lab_Data/bellezad/write_out/transect_ppfd"
-  )
+      file      = "transect_ppfd" # Creates a .rds file from the model fit
+      )
 
 pp_check(m_light_out, ndraws = 100)
 pp_check(m_light_null_out, ndraws = 100)
@@ -290,7 +291,7 @@ m_temp_null_out =
       prior     = prior_tn,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
-      file      = "~/Lab_Data/bellezad/write_out/transect_temp_null"
+      file      = "transect_temp_null" # Creates a .rds file from the model fit
   )
 
 m_temp_out = 
@@ -303,10 +304,10 @@ m_temp_out =
       prior     = prior_t,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
-      file      = "~/Lab_Data/bellezad/write_out/transect_temp"
-  )
+      file      = "transect_temp" # Creates a .rds file from the model fit
+      )
 
-pp_check(m_temp_out, ndraws = 100)
+pp_check(m_temp_out, type = "hist", ndraws = 100)
 pp_check(m_temp_out, type = "ecdf_overlay", ndraws = 100)
 mcmc_rank_hist(m_temp_out)
 loo(m_temp_null_out)
@@ -346,7 +347,7 @@ m_rug_null_out =
       prior     = prior_rugn,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
-      file      = "~/Lab_Data/bellezad/write_out/transect_rugosity_null"
+      file      = "transect_rugosity_null" # Creates a .rds file from the model fit
   )
 
 m_rug_out = 
@@ -359,10 +360,10 @@ m_rug_out =
       prior     = prior_rug,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
-      file      = "~/Lab_Data/bellezad/write_out/transect_rugosity"
+      file      = "transect_rugosity" # Creates a .rds file from the model fit
   )
 
-pp_check(m_rug_out, ndraws = 100)
+pp_check(m_rug_out, type = "hist", ndraws = 100)
 pp_check(m_rug_out, type = "ecdf_overlay", ndraws = 100)
 mcmc_rank_hist(m_rug_out)
 rug_mod  = loo(m_rug_out)
@@ -471,7 +472,7 @@ m_benth_c_null_out =
       prior     = prior_bn,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
-      file      = "~/Lab_Data/bellezad/write_out/benthic_coralline_null"
+      file      = "benthic_coralline_null" # Creates a .rds file from the model fit
   )
 
 m_benth_m_null_out = 
@@ -484,7 +485,7 @@ m_benth_m_null_out =
       prior     = prior_bn,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
-      file      = "~/Lab_Data/bellezad/write_out/benthic_macroalgae_null"
+      file      = "benthic_macroalgae_null" # Creates a .rds file from the model fit
   )
 
 m_benth_s_null_out = 
@@ -497,7 +498,7 @@ m_benth_s_null_out =
       prior     = prior_b1n,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
-      file      = "~/Lab_Data/bellezad/write_out/benthic_substrate_null"
+      file      = "benthic_substrate_null" # Creates a .rds file from the model fit
   )
 
 m_benth_t_null_out = 
@@ -510,7 +511,7 @@ m_benth_t_null_out =
       prior     = prior_bn,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
-      file      = "~/Lab_Data/bellezad/write_out/benthic_turf_null"
+      file      = "benthic_turf_null" # Creates a .rds file from the model fit
   )
 
 m_benth_c_out = 
@@ -523,8 +524,8 @@ m_benth_c_out =
       prior     = prior_b,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
-      file      = "~/Lab_Data/bellezad/write_out/benthic_coralline"
-  )
+      file      = "benthic_coralline" # Creates a .rds file from the model fit
+      )
 
 m_benth_m_out = 
   brm(m_benth_m,
@@ -536,8 +537,8 @@ m_benth_m_out =
       prior     = prior_b,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
-      file      = "~/Lab_Data/bellezad/write_out/benthic_macroalgae"
-  )
+      file      = "benthic_macroalgae" # Creates a .rds file from the model fit
+      )
 
 m_benth_s_out = 
   brm(m_benth_s,
@@ -549,8 +550,8 @@ m_benth_s_out =
       prior     = prior_b1,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
-      file      = "~/Lab_Data/bellezad/write_out/benthic_substrate"
-  )
+      file      = "benthic_substrate" # Creates a .rds file from the model fit
+      )
 
 m_benth_t_out = 
   brm(m_benth_t,
@@ -562,14 +563,13 @@ m_benth_t_out =
       prior     = prior_b,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
-      file      = "~/Lab_Data/bellezad/write_out/benthic_turf"
-  )
+      file      = "benthic_turf" # Creates a .rds file from the model fit
+      )
 
-pp_check(m_benth_c_out, ndraws = 100)
-pp_check(m_benth_m_out, ndraws = 100)
-pp_check(m_benth_s_out, ndraws = 100)
-pp_check(m_benth_t_out, ndraws = 100)
-pp_check(m_benth_t_out, type = "ecdf_overlay", ndraws = 100)
+pp_check(m_benth_c_out, type = "hist", ndraws = 100)
+pp_check(m_benth_m_out, type = "hist", ndraws = 100)
+pp_check(m_benth_s_out, type = "hist", ndraws = 100)
+pp_check(m_benth_t_out, type = "hist", ndraws = 100)
 
 benth_c_null = loo(m_benth_c_null_out)
 benth_m_null = loo(m_benth_m_null_out)
@@ -603,7 +603,7 @@ sqm = df_urchin |>
       rename(species = species, count = n)
   })) |> unnest(sp) |> dplyr::select(-data) |> 
   arrange(datetime) |> group_by(datetime, location, trans) |> 
-  # Calculate the % and urchins per square meter in the 20 square meter transect
+# Calculate the % and urchins per square meter in the 20 square meter transect
   mutate(total_c = sum(count), 
          percent = count/total_c*100, 
          sqm = count/20) |> 
@@ -651,7 +651,7 @@ count_hcra_mod =
   bf(hcra ~ s(time, bs = "cr", k = 5) + 
        s(time, by = interaction(location, trans)) + 
        interaction(location, trans) + location + trans,
-     hu ~ s(time, bs = "cr", k = 5) + 
+   hu ~ s(time, bs = "cr", k = 5) + 
        s(time, by = interaction(location, trans)) + 
        interaction(location, trans) + location + trans) + hurdle_negbinomial("log")
 
@@ -670,7 +670,7 @@ prior_sqm =
   set_prior("normal(0, 0.5)", class = "b", dpar = "hu") +
   set_prior("logistic(0, 1)", class = "Intercept", dpar = "hu") +
   set_prior("student_t(3, 0, 1)", class = "sds", dpar = "hu") 
-
+  
 dsav_sqm_null_out = 
   brm(count_dsav_mod_null,
       data      = urchin_sqm,
@@ -681,7 +681,7 @@ dsav_sqm_null_out =
       prior     = prior_sqmn,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
-      file      = "~/Lab_Data/bellezad/write_out/benthic_dsav_count_null"
+      file      = "benthic_dsav_count_null" # Creates a .rds file from the model fit
   )
 
 dset_sqm_null_out = 
@@ -694,7 +694,7 @@ dset_sqm_null_out =
       prior     = prior_sqmn,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
-      file      = "~/Lab_Data/bellezad/write_out/benthic_dset_count_null"
+      file      = "benthic_dset_count_null" # Creates a .rds file from the model fit
   )
 
 hcra_sqm_null_out = 
@@ -707,7 +707,7 @@ hcra_sqm_null_out =
       prior     = prior_sqmn,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
-      file      = "~/Lab_Data/bellezad/write_out/benthic_hcra_count_null"
+      file      = "benthic_hcra_count_null" # Creates a .rds file from the model fit
   )
 
 
@@ -721,7 +721,7 @@ dsav_sqm_out =
       prior     = prior_sqm,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
-      file      = "~/Lab_Data/bellezad/write_out/benthic_dsav_count"
+      file      = "benthic_dsav_count" # Creates a .rds file from the model fit
   )
 
 dset_sqm_out = 
@@ -734,7 +734,7 @@ dset_sqm_out =
       prior     = prior_sqm,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
-      file      = "~/Lab_Data/bellezad/write_out/benthic_dset_count"
+      file      = "benthic_dset_count" # Creates a .rds file from the model fit
   )
 
 hcra_sqm_out = 
@@ -747,12 +747,12 @@ hcra_sqm_out =
       prior     = prior_sqm,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
-      file      = "~/Lab_Data/bellezad/write_out/benthic_hcra_count"
+      file      = "benthic_hcra_count" # Creates a .rds file from the model fit
   )
 
-pp_check(dsav_sqm_out, ndraws = 100)
-pp_check(dset_sqm_out, ndraws = 100)
-pp_check(hcra_sqm_out, ndraws = 100)
+pp_check(dsav_sqm_out, type = "hist", ndraws = 100)
+pp_check(dset_sqm_out, type = "hist", ndraws = 100)
+pp_check(hcra_sqm_out, type = "hist", ndraws = 100)
 
 sqm_dsav_null = loo(dsav_sqm_null_out, moment_match = TRUE) 
 sqm_dset_null = loo(dset_sqm_null_out, moment_match = TRUE) 
@@ -772,7 +772,7 @@ urchin_bio = df_urchin |>
   mutate(species = factor(species, levels = c("dsav", "dset", "hcra"))) |>
   group_by(datetime, location, trans, species) |> 
   summarise(weight = mean(weight)) |>
-  # Calculate urchin biomass per square meter within 20sqm 
+# Calculate urchin biomass per square meter within 20sqm 
   mutate(total_b = sum(weight),
          total_b_sqm = total_b/20,
          bio_sqm = weight/20) 
@@ -837,7 +837,7 @@ dsav_bio_null_out =
       prior     = prior_bn,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
-      file      = "~/Lab_Data/bellezad/write_out/benthic_dsav_biomass_null",
+      file      = "benthic_dsav_biomass_null" # Creates a .rds file from the model fit
   )
 
 dset_bio_null_out = 
@@ -850,7 +850,7 @@ dset_bio_null_out =
       prior     = prior_bn,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
-      file      = "~/Lab_Data/bellezad/write_out/benthic_dset_biomass_null",
+      file      = "benthic_dset_biomass_null" # Creates a .rds file from the model fit
   )
 
 hcra_bio_null_out = 
@@ -863,7 +863,7 @@ hcra_bio_null_out =
       prior     = prior_bn,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
-      file      = "~/Lab_Data/bellezad/write_out/benthic_hcra_biomass_null",
+      file      = "benthic_hcra_biomass_null" # Creates a .rds file from the model fit
   )
 
 dsav_bio_out = 
@@ -876,8 +876,8 @@ dsav_bio_out =
       prior     = prior_b,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
-      file      = "~/Lab_Data/bellezad/write_out/benthic_dsav_biomass",
-  )
+      file      = "benthic_dsav_biomass" # Creates a .rds file from the model fit
+      )
 
 dset_bio_out = 
   brm(bio_dset_mod,
@@ -889,8 +889,8 @@ dset_bio_out =
       prior     = prior_b,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
-      file      = "~/Lab_Data/bellezad/write_out/benthic_dset_biomass",
-  )
+      file      = "benthic_dset_biomass" # Creates a .rds file from the model fit
+      )
 
 hcra_bio_out = 
   brm(bio_hcra_mod,
@@ -902,12 +902,12 @@ hcra_bio_out =
       prior     = prior_b,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
-      file      = "~/Lab_Data/bellezad/write_out/benthic_hcra_biomass",
-  )
+      file      = "benthic_hcra_biomass" # Creates a .rds file from the model fit
+      )
 
-pp_check(dsav_bio_out, ndraws = 100)
-pp_check(dset_bio_out, ndraws = 100)
-pp_check(hcra_bio_out, ndraws = 100)
+pp_check(dsav_bio_out, type = "hist", ndraws = 100)
+pp_check(dset_bio_out, type = "hist", ndraws = 100)
+pp_check(hcra_bio_out, type = "hist", ndraws = 100)
 
 bio_dsav_null = loo(dsav_bio_null_out)
 bio_dset_null = loo(dset_bio_null_out)
@@ -920,10 +920,6 @@ bio_hcra_mod = loo(hcra_bio_out, moment_match = TRUE)
 loo_compare(bio_dsav_mod, bio_dsav_null)
 loo_compare(bio_dset_mod, bio_dset_null)
 loo_compare(bio_hcra_mod, bio_hcra_null)
-
-mcmc_rank_hist(dsav_bio_out)
-mcmc_rank_hist(dset_bio_out)
-mcmc_rank_hist(hcra_bio_out)
 
 ## Model: Urchin microhabitat --------------------------------------------------
 tmp = df_urchin |> 
@@ -947,8 +943,8 @@ tmp_size = tmp |>
   group_by(datetime, location, trans, species, habitat) |> 
   summarise(mean_size = mean(size), sd_size = sd(size)) |> 
   mutate(categ = ifelse(mean_size <= 3.9, "s", 
-                        ifelse(mean_size > 3.9 & mean_size <= 5.9, "m",
-                               ifelse(mean_size > 5.9, "l", "none"))))
+                 ifelse(mean_size > 3.9 & mean_size <= 5.9, "m",
+                 ifelse(mean_size > 5.9, "l", "none"))))
 
 tmp_full = tmp |> 
   expand(datetime, location, trans, species, habitat) |> 
@@ -1000,7 +996,7 @@ uhab_null_out =
       prior      = prior_habn,
       control    = CONTROL,
       save_pars  = save_pars(all = TRUE),
-      file       = "~/Lab_Data/bellezad/write_out/microhabitat_distribution_null"
+      file       = "microhabitat_distribution_null" # Creates a .rds file from the model fit
   )
 
 uhab_mod_out = 
@@ -1013,11 +1009,10 @@ uhab_mod_out =
       prior      = prior_hab,
       control    = CONTROL,
       save_pars  = save_pars(all = TRUE),
-      file       = "~/Lab_Data/bellezad/write_out/microhabitat_distribution"
+      file       = "microhabitat_distribution" # Creates a .rds file from the model fit
   )
 
-pp_check(uhab_null_out, ndraws = 100)
-pp_check(uhab_mod_out,  ndraws = 100)
+pp_check(uhab_mod_out, type = "hist", ndraws = 100)
 pp_check(uhab_mod_out, type = "ecdf_overlay", ndraws = 100)
 uhab_null = loo(uhab_null_out)
 uhab_mod = loo(uhab_mod_out) 
@@ -1037,7 +1032,7 @@ m_disp_null =
 
 m_disp_mod = 
   bf(distance ~ 
-       species * location * survey + (1|trial),
+          species * location * survey + (1|trial),
      hu ~ species * location * survey) + hurdle_gamma(link = "log")
 
 get_prior(m_disp_mod, data = tag_linear)
@@ -1065,8 +1060,8 @@ disp_null_out =
       prior     = prior_dispn,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
-      file      = "~/Lab_Data/bellezad/write_out/tag_distance_null" 
-  )
+      file      = "tag_distance_null" # Creates a .rds file from the model fit
+      )
 
 disp_mod_out = 
   brm(m_disp_mod,
@@ -1078,11 +1073,9 @@ disp_mod_out =
       prior     = prior_disp,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
-      file      = "~/Lab_Data/bellezad/write_out/tag_distance",
-      file_refit = "always"
-  )
+      file      = "tag_distance" # Creates a .rds file from the model fit
+      )
 
-pp_check(disp_mod_out, ndraws = 100)
 pp_check(disp_mod_out, type = "hist", binwidth = 2, ndraws = 3) 
 pp_check(disp_mod_out, type = "ecdf_overlay", ndraws = 100)
 loo(disp_mod_out)
@@ -1130,7 +1123,7 @@ group_null_out =
       prior     = prior_group0,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
-      file      = "~/Lab_Data/bellezad/write_out/tag_group_null"
+      file      = "tag_group_null" # Creates a .rds file from the model fit
   )
 
 group_mod_out = 
@@ -1143,26 +1136,13 @@ group_mod_out =
       prior     = prior_group1,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
-      file      = "~/Lab_Data/bellezad/write_out/tag_group" 
-  )
+      file      = "tag_group" # Creates a .rds file from the model fit
+      )
 
-pp_check(group_mod_out,  ndraws = 300)
-pp_check(group_mod_out,  type = "ecdf_overlay", ndraws = 100)
 pp_check(group_mod_out,  type = "hist", ndraws = 5)
-loo(group_mod_out)
+pp_check(group_mod_out,  type = "ecdf_overlay", ndraws = 100)
 group_null = loo(group_null_out)
 group_mod  = loo(group_mod_out)
 loo_compare(group_mod, group_null)
 plot(conditional_effects(group_mod_out))
-
-
-
-
-
-
-
-
-
-
-
 
