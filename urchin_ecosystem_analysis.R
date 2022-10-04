@@ -1,25 +1,30 @@
 # Data analysis for the manuscript:
 # "The behavior of sympatric urchin species across and ecosystem state gradient"
 
+# sessionInfo()
+# R version 4.2.1 (2022-06-23)
+# Platform: x86_64-pc-linux-gnu (64-bit)
+# Platform: x86_64-pc-linux-gnu (64-bit)
+# Running under: Debian GNU/Linux 11 (bullseye)
+
+
 # Load packages for data reading, analysis, and plotting
 library(tidyverse)  # For data wrangling
 library(lubridate)  # For easy manipulation of dates
 library(brms)       # For Bayesian models
 library(tidybayes)  # For extracting tidy data from Bayesian model fits
 library(bayesplot)  # For added plotting functionality of Bayesian models
-library(readxl)     # For reading excel files
-library(gnnlab)     # For easy reading of HOBO logger data
 library(showtext)   # For specifying text/graphics
 
 ########################### LOAD AND PREPARE DATA ##############################
-df_urchin   = read_csv("urchin_data.csv")         # Urchin size-weight model fit data
-df_quad     = read_csv("transect_quad_data.csv")  # Benthic quadrat data. Excludes "Others"
-df_depth    = read_csv("depth_data.csv")          # Depth logger data
-df_light    = read_csv("temp_ppfd.csv")           # Mean monthly temperature and light (ppfd) data
-df_tag      = read_csv("tag_urchin.csv")          # Mark-recapture experiment data
-df_rugosity = read_csv("raw_rugosity.csv")        # Benthic rugosity data
-df_wave     = read_csv("wave_data.csv")           # Wave logger data
-urchin_orig = read_csv("urchin_orig.csv")         # Monthly urchin monitoring data
+df_urchin   = read_csv("./data/urchin_data.csv")         # Urchin size-weight model fit data
+df_quad     = read_csv("./data/transect_quad_data.csv")  # Benthic quadrat data. Excludes "Others"
+df_depth    = read_csv("./data/depth_data.csv")          # Depth logger data
+df_light    = read_csv("./data/temp_ppfd.csv")           # Mean monthly temperature and light (ppfd) data
+df_tag      = read_csv("./data/tag_urchin.csv")          # Mark-recapture experiment data
+df_rugosity = read_csv("./data/raw_rugosity.csv")        # Benthic rugosity data
+df_wave     = read_csv("./data/wave_data.csv")           # Wave logger data
+urchin_orig = read_csv("./data/urchin_orig.csv")         # Monthly urchin monitoring data
 
 # Some descriptive statistics -------------------------------------------------
 
@@ -123,13 +128,12 @@ CONTROL = list(adapt_delta = 0.999, max_treedepth = 15, stepsize = 0.001)
 ## Model: Wave height ----------------------------------------------------------
 waves = df_wave |> 
   mutate(month = month(datetime),
-         month = month/12,
+         month = (month - 1)/12,
          year  = year(datetime),
-         x = month*12,
          time = year + month) |> 
   filter(datetime > "2020-08-01")
 
-m_wave_null = bf(mean_height ~ 1) + gaussian(link = "log")
+m_wave_null = bf(mean_height ~ 1) + Gamma(link = "log")
 
 m_wave = bf(mean_height ~ s(time, bs = "cr", k = 6) + location) + Gamma(link = "log")
 
@@ -158,6 +162,7 @@ m_wave_null_out =
       prior     = prior_wn,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
+      # file_refit = "always", 
       file      = "transect_wave_null" # Creates a .rds file from the model fit 
   )
 
@@ -171,6 +176,7 @@ m_wave_out =
       prior     = prior_w,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
+      # file_refit = "always", 
       file      = "transect_wave" # Creates a .rds file from the model fit
       )
 
@@ -187,9 +193,8 @@ mcmc_parcoord(m_wave_out)
 light = df_light |> expand(datetime, location, trans) |> 
   left_join(df_light, by = c("datetime", "location", "trans")) |> 
   mutate(month = month(datetime),
-         month = month/12,
+         month = (month - 1)/12,
          year  = year(datetime),
-         x = month*12,
          time = year + month) |> 
   mutate(datetime = as.Date(datetime)) |> 
   filter(datetime > "2020-08-01")
@@ -223,6 +228,7 @@ m_light_null_out =
       prior     = prior_ln,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
+      # file_refit = "always", 
       file      = "transect_ppfd_null" # Creates a .rds file from the model fit
   )
 
@@ -236,6 +242,7 @@ m_light_out =
       prior     = prior_l,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
+      # file_refit = "always", 
       file      = "transect_ppfd" # Creates a .rds file from the model fit
       )
 
@@ -254,15 +261,14 @@ temperature = df_light |>
   expand(datetime, location, trans) |> 
   left_join(df_light, by = c("datetime", "location", "trans")) |> 
   mutate(month = month(datetime),
-         month = month/12,
+         month = (month - 1)/12,
          year  = year(datetime),
-         x = month*12,
          time = year + month) |> 
   mutate(datetime = as.Date(datetime)) |> 
   filter(datetime > "2020-08-01")
 
 m_temp_null = 
-  bf(mean_temp ~ 1) + gaussian(link = "log")
+  bf(mean_temp ~ 1) + gaussian()
 
 m_temp = 
   bf(mean_temp ~ 
@@ -291,6 +297,7 @@ m_temp_null_out =
       prior     = prior_tn,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
+      # file_refit = "always", 
       file      = "transect_temp_null" # Creates a .rds file from the model fit
   )
 
@@ -304,6 +311,7 @@ m_temp_out =
       prior     = prior_t,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
+      # file_refit = "always", 
       file      = "transect_temp" # Creates a .rds file from the model fit
       )
 
@@ -319,7 +327,7 @@ loo_compare(temp_mod, temp_null)
 df_rugosity |> 
   dplyr::select(survey, location, rugosity)
 
-m_rug_null = bf(rugosity ~ 1) + Gamma()
+m_rug_null = bf(rugosity ~ 1) + Gamma(link = "log")
 
 m_rug = bf(rugosity ~ location * trans) + Gamma(link = "log")
 
@@ -347,6 +355,7 @@ m_rug_null_out =
       prior     = prior_rugn,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
+      # file_refit = "always", 
       file      = "transect_rugosity_null" # Creates a .rds file from the model fit
   )
 
@@ -360,6 +369,7 @@ m_rug_out =
       prior     = prior_rug,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
+      # file_refit = "always", 
       file      = "transect_rugosity" # Creates a .rds file from the model fit
   )
 
@@ -386,9 +396,8 @@ benth = df_quad |>
                           Coralline = "cor", Turf = "tur", Macroalgae = "mac",
                           Substrate = "sub")) |> 
   mutate(month = month(datetime),
-         month = month/12,
+         month = (month - 1)/12,
          year = year(datetime),
-         x = month*12,
          time = year + month) |> 
   mutate(datetime = as.Date(datetime)) |> 
   filter(datetime > "2020-08-01") |> 
@@ -472,6 +481,7 @@ m_benth_c_null_out =
       prior     = prior_bn,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
+      # file_refit = "always", 
       file      = "benthic_coralline_null" # Creates a .rds file from the model fit
   )
 
@@ -485,6 +495,7 @@ m_benth_m_null_out =
       prior     = prior_bn,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
+      # file_refit = "always", 
       file      = "benthic_macroalgae_null" # Creates a .rds file from the model fit
   )
 
@@ -498,6 +509,7 @@ m_benth_s_null_out =
       prior     = prior_b1n,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
+      # file_refit = "always", 
       file      = "benthic_substrate_null" # Creates a .rds file from the model fit
   )
 
@@ -511,6 +523,7 @@ m_benth_t_null_out =
       prior     = prior_bn,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
+      # file_refit = "always", 
       file      = "benthic_turf_null" # Creates a .rds file from the model fit
   )
 
@@ -524,6 +537,7 @@ m_benth_c_out =
       prior     = prior_b,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
+      # file_refit = "always", 
       file      = "benthic_coralline" # Creates a .rds file from the model fit
       )
 
@@ -537,6 +551,7 @@ m_benth_m_out =
       prior     = prior_b,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
+      # file_refit = "always", 
       file      = "benthic_macroalgae" # Creates a .rds file from the model fit
       )
 
@@ -550,6 +565,7 @@ m_benth_s_out =
       prior     = prior_b1,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
+      # file_refit = "always", 
       file      = "benthic_substrate" # Creates a .rds file from the model fit
       )
 
@@ -563,6 +579,7 @@ m_benth_t_out =
       prior     = prior_b,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
+      # file_refit = "always", 
       file      = "benthic_turf" # Creates a .rds file from the model fit
       )
 
@@ -619,9 +636,8 @@ urchin_sqm = sqm |>
   drop_na() |>
   left_join(sqm, by = c("datetime", "location", "trans", "species")) |>
   mutate(month = month(datetime),
-         month = month/12,
+         month = (month - 1)/12,
          year  = year(datetime),
-         x = month*12,
          time = year + month) |>
   dplyr::select(datetime, location, trans, species, count, time) |> 
   pivot_wider(names_from = species, values_from = count)
@@ -681,6 +697,7 @@ dsav_sqm_null_out =
       prior     = prior_sqmn,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
+      # file_refit = "always", 
       file      = "benthic_dsav_count_null" # Creates a .rds file from the model fit
   )
 
@@ -694,6 +711,7 @@ dset_sqm_null_out =
       prior     = prior_sqmn,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
+      # file_refit = "always", 
       file      = "benthic_dset_count_null" # Creates a .rds file from the model fit
   )
 
@@ -707,6 +725,7 @@ hcra_sqm_null_out =
       prior     = prior_sqmn,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
+      # file_refit = "always", 
       file      = "benthic_hcra_count_null" # Creates a .rds file from the model fit
   )
 
@@ -721,6 +740,7 @@ dsav_sqm_out =
       prior     = prior_sqm,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
+      # file_refit = "always", 
       file      = "benthic_dsav_count" # Creates a .rds file from the model fit
   )
 
@@ -734,6 +754,7 @@ dset_sqm_out =
       prior     = prior_sqm,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
+      # file_refit = "always", 
       file      = "benthic_dset_count" # Creates a .rds file from the model fit
   )
 
@@ -747,6 +768,7 @@ hcra_sqm_out =
       prior     = prior_sqm,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
+      # file_refit = "always", 
       file      = "benthic_hcra_count" # Creates a .rds file from the model fit
   )
 
@@ -837,6 +859,7 @@ dsav_bio_null_out =
       prior     = prior_bn,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
+      # file_refit = "always", 
       file      = "benthic_dsav_biomass_null" # Creates a .rds file from the model fit
   )
 
@@ -850,6 +873,7 @@ dset_bio_null_out =
       prior     = prior_bn,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
+      # file_refit = "always", 
       file      = "benthic_dset_biomass_null" # Creates a .rds file from the model fit
   )
 
@@ -863,6 +887,7 @@ hcra_bio_null_out =
       prior     = prior_bn,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
+      # file_refit = "always", 
       file      = "benthic_hcra_biomass_null" # Creates a .rds file from the model fit
   )
 
@@ -876,6 +901,7 @@ dsav_bio_out =
       prior     = prior_b,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
+      # file_refit = "always", 
       file      = "benthic_dsav_biomass" # Creates a .rds file from the model fit
       )
 
@@ -889,6 +915,7 @@ dset_bio_out =
       prior     = prior_b,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
+      # file_refit = "always", 
       file      = "benthic_dset_biomass" # Creates a .rds file from the model fit
       )
 
@@ -902,6 +929,7 @@ hcra_bio_out =
       prior     = prior_b,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
+      # file_refit = "always", 
       file      = "benthic_hcra_biomass" # Creates a .rds file from the model fit
       )
 
@@ -955,9 +983,8 @@ tmp_full = tmp |>
   select(-c(sd_size, mean_size)) |> 
   mutate(datetime = as.Date(datetime),
          month = month(datetime),
-         month = month/12,
+         month = (month - 1)/12,
          year  = year(datetime),
-         x     = month*12,
          time  = year + month)
 
 
@@ -996,6 +1023,7 @@ uhab_null_out =
       prior      = prior_habn,
       control    = CONTROL,
       save_pars  = save_pars(all = TRUE),
+      # file_refit = "always", 
       file       = "microhabitat_distribution_null" # Creates a .rds file from the model fit
   )
 
@@ -1009,6 +1037,7 @@ uhab_mod_out =
       prior      = prior_hab,
       control    = CONTROL,
       save_pars  = save_pars(all = TRUE),
+      # file_refit = "always", 
       file       = "microhabitat_distribution" # Creates a .rds file from the model fit
   )
 
@@ -1060,6 +1089,7 @@ disp_null_out =
       prior     = prior_dispn,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
+      # file_refit = "always", 
       file      = "tag_distance_null" # Creates a .rds file from the model fit
       )
 
@@ -1073,6 +1103,7 @@ disp_mod_out =
       prior     = prior_disp,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
+      # file_refit = "always", 
       file      = "tag_distance" # Creates a .rds file from the model fit
       )
 
@@ -1097,9 +1128,9 @@ tag_groupsize = df_tag |>
                          labels = c("0-hr", "12-hr", "24-hr"))) |> 
   drop_na()
 
-group_null = bf(individuals ~ 1) + negbinomial()
+group_null = bf(individuals ~ 1) + negbinomial(link = "log")
 
-group_model = bf(individuals ~ survey * location + (location + survey|trial)) + negbinomial()
+group_model = bf(individuals ~ survey * location + (location + survey|trial)) + negbinomial(link = "log")
 
 get_prior(group_model, data = tag_groupsize)
 
@@ -1123,6 +1154,7 @@ group_null_out =
       prior     = prior_group0,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
+      # file_refit = "always", 
       file      = "tag_group_null" # Creates a .rds file from the model fit
   )
 
@@ -1136,6 +1168,7 @@ group_mod_out =
       prior     = prior_group1,
       control   = CONTROL,
       save_pars = save_pars(all = TRUE),
+      # file_refit = "always", 
       file      = "tag_group" # Creates a .rds file from the model fit
       )
 
