@@ -17,14 +17,14 @@ library(bayesplot)  # For added plotting functionality of Bayesian models
 library(showtext)   # For specifying text/graphics
 
 ########################### LOAD AND PREPARE DATA ##############################
-df_urchin   = read_csv("./data/urchin_data.csv")         # Urchin size-weight model fit data
-df_quad     = read_csv("./data/transect_quad_data.csv")  # Benthic quadrat data. Excludes "Others"
-df_depth    = read_csv("./data/depth_data.csv")          # Depth logger data
-df_light    = read_csv("./data/temp_ppfd.csv")           # Mean monthly temperature and light (ppfd) data
-df_tag      = read_csv("./data/tag_urchin.csv")          # Mark-recapture experiment data
-df_rugosity = read_csv("./data/raw_rugosity.csv")        # Benthic rugosity data
-df_wave     = read_csv("./data/wave_data.csv")           # Wave logger data
-urchin_orig = read_csv("./data/urchin_orig.csv")         # Monthly urchin monitoring data
+df_wave     = read_csv("./data/Table_S1-wave_data.csv")           # Wave logger data
+df_light    = read_csv("./data/Table_S2-temp_ppfd.csv")           # Mean monthly temperature and light (ppfd) data
+df_quad     = read_csv("./data/Table_S3-transect_quad_data.csv")  # Benthic quadrat data. Excludes "Others"
+df_urchin   = read_csv("./data/Table_S4-urchin_data.csv")         # Urchin size-weight model fit data
+urchin_orig = read_csv("./data/Table_S5-urchin_orig.csv")         # Monthly urchin monitoring data
+df_tag      = read_csv("./data/Table_S6-tag_urchin.csv")          # Mark-recapture experiment data
+df_rugosity = read_csv("./data/Table_S7-raw_rugosity.csv")        # Benthic rugosity data
+df_depth    = read_csv("./data/Table_S8-depth_data.csv")          # Depth logger data
 
 # Some descriptive statistics -------------------------------------------------
 
